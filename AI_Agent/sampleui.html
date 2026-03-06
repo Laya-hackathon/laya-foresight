@@ -1,0 +1,2235 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Foresight · Laya Healthcare Intelligence</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap');
+
+        :root {
+            --bg: #f0f2f7;
+            --surface: #ffffff;
+            --surface2: #f7f8fb;
+            --ink: #0f1623;
+            --ink2: #2d3748;
+            --sub: #64748b;
+            --faint: #94a3b8;
+            --border: #e2e8f0;
+            --border2: #cbd5e1;
+            --laya: #003d7a;
+            --laya-mid: #0057aa;
+            --laya-lite: #e8f0fb;
+            --teal: #00897b;
+            --teal-lite: #e0f2f1;
+            --amber: #d97706;
+            --amber-lite: #fef3c7;
+            --rose: #e11d48;
+            --rose-lite: #fff1f2;
+            --green: #15803d;
+            --green-lite: #f0fdf4;
+            --violet: #7c3aed;
+            --violet-lite: #f5f3ff;
+            --display: 'Syne', sans-serif;
+            --body: 'DM Sans', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --r: 12px;
+            --sh: 0 1px 3px rgba(0, 0, 0, .06), 0 4px 16px rgba(0, 0, 0, .06);
+            --sh2: 0 8px 32px rgba(0, 0, 0, .12), 0 2px 8px rgba(0, 0, 0, .06);
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            height: 100%;
+            font-size: 14px;
+        }
+
+        body {
+            height: 100%;
+            background: var(--bg);
+            color: var(--ink);
+            font-family: var(--body);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* TOPBAR */
+        .topbar {
+            height: 56px;
+            background: var(--laya);
+            display: flex;
+            align-items: center;
+            padding: 0 1.5rem;
+            gap: 1rem;
+            flex-shrink: 0;
+            box-shadow: 0 2px 12px rgba(0, 61, 122, .3);
+            z-index: 200;
+            position: relative;
+        }
+
+        .logo {
+            font-family: var(--display);
+            font-size: 18px;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-badge {
+            background: rgba(255, 255, 255, .15);
+            border: 1px solid rgba(255, 255, 255, .2);
+            border-radius: 6px;
+            padding: 2px 8px;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: rgba(255, 255, 255, .85);
+            font-family: var(--mono);
+        }
+
+        .topbar-nav {
+            display: flex;
+            margin-left: 2rem;
+        }
+
+        .tn {
+            color: rgba(255, 255, 255, .55);
+            font-size: 13px;
+            font-weight: 500;
+            padding: 0 1rem;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all .15s;
+        }
+
+        .tn:hover {
+            color: rgba(255, 255, 255, .85);
+        }
+
+        .tn.on {
+            color: #fff;
+            border-bottom-color: rgba(255, 255, 255, .6);
+        }
+
+        .topbar-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .tb-time {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: rgba(255, 255, 255, .5);
+            letter-spacing: .5px;
+        }
+
+        .tb-user {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, .15);
+            border: 1.5px solid rgba(255, 255, 255, .25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        /* MAIN */
+        .main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+
+        /* SECTION LABEL */
+        .slbl {
+            font-family: var(--mono);
+            font-size: 9px;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: var(--faint);
+            margin-bottom: .5rem;
+        }
+
+        /* STAT ROW */
+        .stat-row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: .85rem;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border-radius: var(--r);
+            padding: 1rem 1.1rem;
+            box-shadow: var(--sh);
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+            transition: box-shadow .2s, transform .2s;
+        }
+
+        .stat-card:hover {
+            box-shadow: var(--sh2);
+            transform: translateY(-1px);
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            border-radius: var(--r) var(--r) 0 0;
+        }
+
+        .sc-rose::after {
+            background: linear-gradient(90deg, var(--rose), #f43f5e);
+        }
+
+        .sc-amber::after {
+            background: linear-gradient(90deg, var(--amber), #f59e0b);
+        }
+
+        .sc-green::after {
+            background: linear-gradient(90deg, var(--green), #22c55e);
+        }
+
+        .sc-laya::after {
+            background: linear-gradient(90deg, var(--laya), var(--laya-mid));
+        }
+
+        .sc-violet::after {
+            background: linear-gradient(90deg, var(--violet), #8b5cf6);
+        }
+
+        .stat-label {
+            font-family: var(--mono);
+            font-size: 9px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--sub);
+            margin-bottom: .4rem;
+        }
+
+        .stat-value {
+            font-family: var(--display);
+            font-size: 32px;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: .2rem;
+        }
+
+        .stat-sub {
+            font-size: 11px;
+            color: var(--sub);
+        }
+
+        .stat-delta {
+            font-family: var(--mono);
+            font-size: 10px;
+            margin-top: .3rem;
+        }
+
+        .dup {
+            color: var(--green);
+        }
+
+        .ddown {
+            color: var(--rose);
+        }
+
+        .dflat {
+            color: var(--faint);
+        }
+
+        /* MID ROW */
+        .mid-row {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: .85rem;
+        }
+
+        .card {
+            background: var(--surface);
+            border-radius: var(--r);
+            border: 1px solid var(--border);
+            box-shadow: var(--sh);
+            overflow: hidden;
+        }
+
+        .card-hdr {
+            padding: .8rem 1.1rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-title {
+            font-family: var(--display);
+            font-size: 13px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        /* BAR CHART */
+        .bar-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 4px;
+            height: 85px;
+            padding: 1rem 1.1rem .4rem;
+        }
+
+        .bc-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .bc-bar {
+            width: 100%;
+            border-radius: 3px 3px 0 0;
+            transition: opacity .2s;
+            cursor: pointer;
+            min-height: 4px;
+        }
+
+        .bc-bar:hover {
+            opacity: .7;
+        }
+
+        .bc-cnt {
+            font-family: var(--mono);
+            font-size: 9px;
+            color: var(--sub);
+        }
+
+        .chart-xlbls {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 1.1rem .8rem;
+            font-family: var(--mono);
+            font-size: 8px;
+            color: var(--faint);
+        }
+
+        .chart-legend {
+            display: flex;
+            gap: 10px;
+            padding: 0 1.1rem .9rem;
+            flex-wrap: wrap;
+        }
+
+        .cl-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: var(--sub);
+        }
+
+        .cl-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+
+        /* ACTIVITY FEED */
+        .feed-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 9px;
+            padding: .6rem 1.1rem;
+            border-bottom: 1px solid var(--border);
+            transition: background .1s;
+            cursor: pointer;
+        }
+
+        .feed-item:last-child {
+            border-bottom: none;
+        }
+
+        .feed-item:hover {
+            background: var(--surface2);
+        }
+
+        .fi-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 7px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            margin-top: 1px;
+        }
+
+        .fi-body {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .fi-text {
+            font-size: 12px;
+            line-height: 1.45;
+            color: var(--ink2);
+        }
+
+        .fi-text strong {
+            color: var(--ink);
+            font-weight: 600;
+        }
+
+        .fi-time {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--faint);
+            margin-top: 1px;
+        }
+
+        .fi-badge {
+            font-family: var(--mono);
+            font-size: 9px;
+            padding: 2px 7px;
+            border-radius: 4px;
+            letter-spacing: .5px;
+            text-transform: uppercase;
+            flex-shrink: 0;
+            margin-top: 3px;
+        }
+
+        /* AGENT STATE BAR */
+        .agent-bar {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            padding: .9rem 1.2rem;
+            box-shadow: var(--sh);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .sleep-orb {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, #e0e8f8, #b8c8e8);
+            border: 2px solid var(--border2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            animation: breathe 3s ease-in-out infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes breathe {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.04);
+            }
+        }
+
+        .sleep-orb.active {
+            background: radial-gradient(circle at 35% 35%, #c8fce8, #00c48c);
+            border-color: #00c48c;
+            animation: pulseo 1.2s ease-in-out infinite;
+        }
+
+        @keyframes pulseo {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(0, 196, 140, .4);
+            }
+
+            50% {
+                box-shadow: 0 0 0 10px rgba(0, 196, 140, 0);
+            }
+        }
+
+        .agent-info {}
+
+        .agent-name {
+            font-family: var(--display);
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .agent-sub {
+            font-size: 11px;
+            color: var(--sub);
+            font-family: var(--mono);
+        }
+
+        .agent-divider {
+            width: 1px;
+            height: 36px;
+            background: var(--border);
+        }
+
+        .agent-stats {
+            display: flex;
+            gap: 18px;
+        }
+
+        .as-item {
+            text-align: center;
+        }
+
+        .as-val {
+            font-family: var(--display);
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--laya);
+        }
+
+        .as-lbl {
+            font-family: var(--mono);
+            font-size: 9px;
+            color: var(--faint);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* INCOMING SECTION */
+        .incoming-hdr {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            margin-bottom: .6rem;
+        }
+
+        .in-pulse {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--rose);
+            animation: ripple 1.4s ease-in-out infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes ripple {
+            0% {
+                box-shadow: 0 0 0 0 rgba(225, 29, 72, .5);
+            }
+
+            70% {
+                box-shadow: 0 0 0 8px rgba(225, 29, 72, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(225, 29, 72, 0);
+            }
+        }
+
+        .in-title {
+            font-family: var(--mono);
+            font-size: 9px;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: var(--faint);
+        }
+
+        .in-cnt {
+            font-family: var(--mono);
+            font-size: 10px;
+            padding: 2px 8px;
+            background: var(--rose-lite);
+            color: var(--rose);
+            border: 1px solid #fecdd3;
+            border-radius: 20px;
+        }
+
+        /* CALLS GRID */
+        .calls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+            gap: .8rem;
+        }
+
+        .call-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            padding: .9rem;
+            box-shadow: var(--sh);
+            cursor: pointer;
+            transition: all .2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .call-card:hover {
+            box-shadow: var(--sh2);
+            transform: translateY(-2px);
+            border-color: var(--border2);
+        }
+
+        .call-card.new {
+            animation: slideIn .35s cubic-bezier(.22, .68, 0, 1.2);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px) scale(.98);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .call-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 4px;
+            border-radius: var(--r) 0 0 var(--r);
+        }
+
+        .cc-high::before {
+            background: var(--rose);
+        }
+
+        .cc-med::before {
+            background: var(--amber);
+        }
+
+        .cc-low::before {
+            background: var(--green);
+        }
+
+        .cc-proc::before {
+            background: var(--laya);
+            animation: blink-bar .8s ease-in-out infinite;
+        }
+
+        @keyframes blink-bar {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: .25;
+            }
+        }
+
+        .cc-done-c::before {
+            background: var(--teal);
+        }
+
+        .cc-await::before {
+            background: var(--violet);
+        }
+
+        .cc-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: .55rem;
+        }
+
+        .cc-name {
+            font-family: var(--display);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .cc-claim-id {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--faint);
+            margin-top: 1px;
+        }
+
+        .band {
+            font-family: var(--mono);
+            font-size: 9px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            flex-shrink: 0;
+        }
+
+        .b-HIGH {
+            background: var(--rose-lite);
+            color: var(--rose);
+            border: 1px solid #fecdd3;
+        }
+
+        .b-MED {
+            background: var(--amber-lite);
+            color: var(--amber);
+            border: 1px solid #fde68a;
+        }
+
+        .b-LOW {
+            background: var(--green-lite);
+            color: var(--green);
+            border: 1px solid #bbf7d0;
+        }
+
+        .cc-tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: .55rem;
+        }
+
+        .cc-tag {
+            font-size: 11px;
+            color: var(--sub);
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            padding: 1px 6px;
+        }
+
+        .cc-warn {
+            font-size: 11px;
+            color: var(--amber);
+            background: var(--amber-lite);
+            border: 1px solid #fde68a;
+            border-radius: 5px;
+            padding: 1px 6px;
+        }
+
+        .cc-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            margin-bottom: .55rem;
+        }
+
+        .strack {
+            flex: 1;
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .sfill {
+            height: 100%;
+            border-radius: 2px;
+        }
+
+        .spct {
+            font-family: var(--mono);
+            font-size: 10px;
+            font-weight: 500;
+            flex-shrink: 0;
+            width: 30px;
+            text-align: right;
+        }
+
+        .cc-foot {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .cc-status {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-family: var(--mono);
+            font-size: 10px;
+        }
+
+        .sdot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+
+        .cc-time {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--faint);
+        }
+
+        .cc-spinner {
+            width: 13px;
+            height: 13px;
+            border: 2px solid var(--border2);
+            border-top-color: var(--laya);
+            border-radius: 50%;
+            animation: spin .7s linear infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .no-calls {
+            text-align: center;
+            padding: 2.5rem;
+            color: var(--faint);
+            font-size: 13px;
+            background: var(--surface);
+            border-radius: var(--r);
+            border: 1px dashed var(--border);
+        }
+
+        /* DRAWER */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 22, 35, .45);
+            z-index: 300;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .25s;
+            backdrop-filter: blur(2px);
+        }
+
+        .overlay.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .drawer {
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: min(680px, 92vw);
+            background: var(--surface);
+            z-index: 400;
+            display: flex;
+            flex-direction: column;
+            box-shadow: -6px 0 40px rgba(0, 0, 0, .12);
+            transform: translateX(100%);
+            transition: transform .3s cubic-bezier(.22, .68, 0, 1.1);
+            border-left: 1px solid var(--border);
+        }
+
+        .drawer.open {
+            transform: translateX(0);
+        }
+
+        .dw-top {
+            padding: .9rem 1.1rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .dw-close {
+            width: 30px;
+            height: 30px;
+            border-radius: 7px;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: var(--sub);
+            transition: all .15s;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .dw-close:hover {
+            background: var(--rose-lite);
+            color: var(--rose);
+            border-color: #fecdd3;
+        }
+
+        .dw-info {
+            flex: 1;
+        }
+
+        .dw-name {
+            font-family: var(--display);
+            font-size: 17px;
+            font-weight: 800;
+        }
+
+        .dw-meta {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            margin-top: .25rem;
+            flex-wrap: wrap;
+        }
+
+        .dw-chip {
+            font-family: var(--mono);
+            font-size: 9px;
+            letter-spacing: .5px;
+            padding: 2px 7px;
+            border-radius: 4px;
+            border: 1px solid;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .dw-timer-block {
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .dw-tval {
+            font-family: var(--mono);
+            font-size: 22px;
+            font-weight: 400;
+            color: var(--laya);
+            line-height: 1;
+        }
+
+        .dw-tlbl {
+            font-family: var(--mono);
+            font-size: 8px;
+            color: var(--faint);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+
+        .dw-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface2);
+            flex-shrink: 0;
+        }
+
+        .dw-tab {
+            padding: .6rem 1rem;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--sub);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all .15s;
+            white-space: nowrap;
+        }
+
+        .dw-tab:hover {
+            color: var(--ink);
+        }
+
+        .dw-tab.on {
+            color: var(--laya);
+            border-bottom-color: var(--laya);
+            background: var(--surface);
+        }
+
+        .dw-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.1rem;
+        }
+
+        /* REASONING TRACE — ChatGPT/DeepSeek/Gemini style */
+        .trace-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: .55rem;
+        }
+
+        /* thinking block */
+        .think-block {
+            border: 1px solid #fde68a;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .think-hdr {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: .6rem .85rem;
+            cursor: pointer;
+            background: #fffbeb;
+            user-select: none;
+            transition: background .15s;
+        }
+
+        .think-hdr:hover {
+            background: #fef9e7;
+        }
+
+        .think-icon {
+            font-size: 13px;
+        }
+
+        .think-lbl {
+            font-family: var(--mono);
+            font-size: 10px;
+            font-weight: 500;
+            color: #92400e;
+            letter-spacing: .5px;
+            flex: 1;
+        }
+
+        .think-dur {
+            font-family: var(--mono);
+            font-size: 9px;
+            color: #b45309;
+            background: #fef3c7;
+            border-radius: 3px;
+            padding: 1px 6px;
+        }
+
+        .think-tog {
+            font-size: 10px;
+            color: #b45309;
+            transition: transform .2s;
+            flex-shrink: 0;
+        }
+
+        .think-tog.open {
+            transform: rotate(180deg);
+        }
+
+        .think-body {
+            padding: .7rem .85rem;
+            background: #fffbeb;
+            border-top: 1px solid #fde68a;
+            font-size: 12.5px;
+            line-height: 1.8;
+            color: #78350f;
+            font-style: italic;
+            display: none;
+        }
+
+        .think-body.show {
+            display: block;
+        }
+
+        .think-body p {
+            margin-bottom: .4rem;
+        }
+
+        .think-body p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* tool call block */
+        .tool-block {
+            border: 1px solid #c7d2fe;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .tool-hdr {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: .6rem .85rem;
+            background: #f0f4ff;
+        }
+
+        .tool-fn {
+            font-family: var(--mono);
+            font-size: 11px;
+            font-weight: 500;
+            color: #3730a3;
+            flex: 1;
+        }
+
+        .tool-fn span {
+            color: #4f46e5;
+            font-weight: 700;
+        }
+
+        .tool-chip-call {
+            font-family: var(--mono);
+            font-size: 8px;
+            letter-spacing: 1px;
+            padding: 2px 7px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            font-weight: 600;
+            background: #e0e7ff;
+            color: #3730a3;
+        }
+
+        .tool-chip-done {
+            font-family: var(--mono);
+            font-size: 8px;
+            letter-spacing: 1px;
+            padding: 2px 7px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            font-weight: 600;
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .tool-args {
+            padding: .5rem .85rem;
+            background: #eef2ff;
+            border-top: 1px solid #c7d2fe;
+            font-family: var(--mono);
+            font-size: 10px;
+            color: #4338ca;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .tool-result {
+            padding: .6rem .85rem;
+            background: #f8faff;
+            border-top: 1px solid #e2e8f0;
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--sub);
+            line-height: 1.7;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .tr-lbl {
+            font-size: 8px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--faint);
+            margin-bottom: .25rem;
+        }
+
+        /* loop marker */
+        .loop-marker {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: .1rem 0;
+        }
+
+        .loop-line {
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .loop-badge {
+            font-family: var(--mono);
+            font-size: 9px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--faint);
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            padding: 2px 9px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+
+        /* done block */
+        .done-block {
+            background: var(--green-lite);
+            border: 1px solid #86efac;
+            border-radius: 10px;
+            padding: .8rem .95rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .done-label {
+            font-family: var(--mono);
+            font-size: 9px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--green);
+            margin-bottom: 3px;
+        }
+
+        .done-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--ink);
+        }
+
+        .done-sub {
+            font-size: 11.5px;
+            color: var(--sub);
+            margin-top: 3px;
+        }
+
+        /* summary */
+        .sum-card {
+            background: var(--laya-lite);
+            border: 1px solid #bfdbfe;
+            border-radius: 10px;
+            padding: .9rem;
+            margin-bottom: .9rem;
+        }
+
+        .sum-lbl {
+            font-family: var(--mono);
+            font-size: 9px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--laya);
+            margin-bottom: .4rem;
+        }
+
+        .sum-text {
+            font-size: 12.5px;
+            line-height: 1.75;
+            color: var(--ink2);
+        }
+
+        .out-chips {
+            display: flex;
+            gap: 7px;
+            flex-wrap: wrap;
+            margin-bottom: .9rem;
+        }
+
+        .oc {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: .4rem .75rem;
+            border-radius: 7px;
+            border: 1px solid;
+            font-size: 11.5px;
+            font-weight: 500;
+        }
+
+        .stat-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: .6rem;
+            margin-bottom: .9rem;
+        }
+
+        .s3-item {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: .65rem;
+            text-align: center;
+        }
+
+        .s3-val {
+            font-family: var(--display);
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--laya);
+        }
+
+        .s3-lbl {
+            font-family: var(--mono);
+            font-size: 9px;
+            color: var(--faint);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+
+        .tl-item {
+            display: flex;
+            gap: 9px;
+            margin-bottom: .75rem;
+        }
+
+        .tl-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-top: 5px;
+            border: 2px solid;
+        }
+
+        .tl-body {}
+
+        .tl-lbl {
+            font-family: var(--mono);
+            font-size: 9px;
+            color: var(--faint);
+            margin-bottom: 1px;
+        }
+
+        .tl-txt {
+            font-size: 12.5px;
+            color: var(--ink2);
+        }
+
+        /* awaiting employee */
+        .await-block {
+            background: var(--violet-lite);
+            border: 1px solid #ddd6fe;
+            border-radius: 10px;
+            padding: .9rem;
+            display: flex;
+            gap: 11px;
+            align-items: flex-start;
+            margin-bottom: .9rem;
+        }
+
+        .await-icon {
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+
+        .await-title {
+            font-family: var(--display);
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--violet);
+            margin-bottom: .25rem;
+        }
+
+        .await-text {
+            font-size: 12.5px;
+            color: var(--ink2);
+            line-height: 1.6;
+        }
+
+        .await-ta {
+            width: 100%;
+            border: 1px solid #c4b5fd;
+            border-radius: 7px;
+            padding: .55rem .75rem;
+            font-family: var(--body);
+            font-size: 12.5px;
+            color: var(--ink);
+            background: #fff;
+            outline: none;
+            resize: none;
+            transition: border-color .15s;
+            margin-top: .7rem;
+        }
+
+        .await-ta:focus {
+            border-color: var(--violet);
+        }
+
+        .await-send {
+            margin-top: .45rem;
+            padding: .5rem 1rem;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            border: none;
+            color: #fff;
+            background: var(--violet);
+            transition: all .15s;
+        }
+
+        .await-send:hover {
+            background: #6d28d9;
+        }
+
+        /* action card in actions tab */
+        .ac-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: .75rem;
+            box-shadow: var(--sh);
+        }
+
+        .ac-hdr {
+            padding: .6rem .9rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .ac-title-txt {
+            font-family: var(--display);
+            font-size: 13px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .ac-status {
+            font-family: var(--mono);
+            font-size: 9px;
+            padding: 2px 7px;
+            border-radius: 4px;
+            letter-spacing: .5px;
+        }
+
+        .ac-body-p {
+            padding: .8rem .9rem;
+            font-size: 12px;
+            line-height: 1.7;
+            color: var(--ink2);
+        }
+
+        .slack-preview {
+            background: #1a1e24;
+            border-radius: 7px;
+            border-left: 3px solid #4a9eda;
+            padding: .7rem .9rem;
+            font-size: 11.5px;
+            color: #d1d3d7;
+            line-height: 1.7;
+        }
+
+        .slack-bot {
+            font-weight: 700;
+            color: #fff;
+            font-size: 12px;
+        }
+
+        .slack-ts {
+            font-size: 10px;
+            color: #5d5e63;
+            margin-left: 6px;
+        }
+
+        .slack-btns {
+            display: flex;
+            gap: 5px;
+            margin-top: .55rem;
+        }
+
+        .sb-btn {
+            font-size: 10px;
+            padding: 3px 9px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .sb-g {
+            background: #007a5a;
+            color: #fff;
+        }
+
+        .sb-r {
+            background: #cc0000;
+            color: #fff;
+        }
+
+        .sb-gr {
+            background: #444;
+            color: #aaa;
+        }
+
+        .email-preview {
+            background: var(--laya-lite);
+            border: 1px solid #bfdbfe;
+            border-radius: 7px;
+            padding: .7rem .9rem;
+        }
+
+        .ep-subj {
+            font-weight: 600;
+            color: var(--laya);
+            margin-bottom: .35rem;
+            font-size: 12.5px;
+        }
+
+        .ep-body {
+            font-size: 11.5px;
+            color: var(--ink2);
+            line-height: 1.75;
+        }
+
+        .log-mono {
+            font-family: var(--mono);
+            font-size: 10.5px;
+            color: var(--sub);
+            line-height: 1.9;
+            background: var(--surface2);
+            border-radius: 7px;
+            padding: .7rem .9rem;
+        }
+
+        /* processing placeholder */
+        .proc-ph {
+            text-align: center;
+            padding: 2.5rem 1rem;
+            color: var(--faint);
+        }
+
+        .proc-spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border2);
+            border-top-color: var(--laya);
+            border-radius: 50%;
+            animation: spin .8s linear infinite;
+            margin: 0 auto .8rem;
+        }
+
+        /* scrollbar */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border2);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--sub);
+        }
+
+        /* toast */
+        .toast {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            background: var(--ink);
+            color: #fff;
+            border-radius: 10px;
+            padding: .75rem 1.1rem;
+            font-size: 12.5px;
+            max-width: 280px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, .25);
+            z-index: 600;
+            display: none;
+            animation: toastIn .3s ease;
+        }
+
+        .toast.show {
+            display: block;
+        }
+
+        @keyframes toastIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .toast-title {
+            font-weight: 700;
+            font-family: var(--display);
+            font-size: 13px;
+            margin-bottom: 2px;
+        }
+
+        @media(max-width:900px) {
+            .stat-row {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .mid-row {
+                grid-template-columns: 1fr;
+            }
+
+            .drawer {
+                width: 100vw;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="topbar">
+        <div class="logo">Foresight <span class="logo-badge">LAYA</span></div>
+        <nav class="topbar-nav">
+            <div class="tn on">Dashboard</div>
+            <div class="tn">Claims</div>
+            <div class="tn">Reports</div>
+            <div class="tn">Settings</div>
+        </nav>
+        <div class="topbar-right">
+            <div class="tb-time" id="clock">--:--:--</div>
+            <div class="tb-user" title="Laya Healthcare Team">LH</div>
+        </div>
+    </div>
+
+    <div class="main">
+
+        <!-- AGENT STATE -->
+        <div class="agent-bar">
+            <div class="sleep-orb" id="agent-orb">😴</div>
+            <div class="agent-info">
+                <div class="agent-name" id="agent-status">Agent Sleeping</div>
+                <div class="agent-sub" id="agent-sub">Monitoring for incoming risk triggers…</div>
+            </div>
+            <div class="agent-divider"></div>
+            <div class="agent-stats">
+                <div class="as-item">
+                    <div class="as-val" id="as-active">0</div>
+                    <div class="as-lbl">Active</div>
+                </div>
+                <div class="as-item">
+                    <div class="as-val" id="as-today">41</div>
+                    <div class="as-lbl">Today</div>
+                </div>
+                <div class="as-item">
+                    <div class="as-val" id="as-prev">18</div>
+                    <div class="as-lbl">Prevented</div>
+                </div>
+                <div class="as-item">
+                    <div class="as-val" id="as-rate">72%</div>
+                    <div class="as-lbl">Success</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI STATS -->
+        <div>
+            <div class="slbl">Today's Overview</div>
+            <div class="stat-row">
+                <div class="stat-card sc-rose">
+                    <div class="stat-label">Call Pressure</div>
+                    <div class="stat-value" style="color:var(--rose)">34%</div>
+                    <div class="stat-sub">of active claims at risk</div>
+                    <div class="stat-delta ddown">↓ 11% vs yesterday</div>
+                </div>
+                <div class="stat-card sc-rose">
+                    <div class="stat-label">High Risk Cases</div>
+                    <div class="stat-value" style="color:var(--rose)">6</div>
+                    <div class="stat-sub">Score ≥ 0.70</div>
+                    <div class="stat-delta ddown">↑ 2 new today</div>
+                </div>
+                <div class="stat-card sc-amber">
+                    <div class="stat-label">Medium Risk Cases</div>
+                    <div class="stat-value" style="color:var(--amber)">9</div>
+                    <div class="stat-sub">Score 0.40–0.69</div>
+                    <div class="stat-delta dflat">→ Same as yesterday</div>
+                </div>
+                <div class="stat-card sc-green">
+                    <div class="stat-label">Calls Prevented</div>
+                    <div class="stat-value" style="color:var(--green)">18</div>
+                    <div class="stat-sub">This week · 72% success</div>
+                    <div class="stat-delta dup">↑ 6 vs last week</div>
+                </div>
+                <div class="stat-card sc-laya">
+                    <div class="stat-label">Agent Actions</div>
+                    <div class="stat-value" style="color:var(--laya)">41</div>
+                    <div class="stat-sub">12 email · 9 push · 8 Slack</div>
+                    <div class="stat-delta dup">↑ Active since 08:00</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CHART + FEED -->
+        <div class="mid-row">
+            <div class="card">
+                <div class="card-hdr">
+                    <div class="card-title">📊 Risk Score Distribution</div>
+                    <span style="font-family:var(--mono);font-size:10px;color:var(--faint);">24 active claims</span>
+                </div>
+                <div class="bar-chart" id="bar-chart"></div>
+                <div class="chart-xlbls">
+                    <span>0.0</span><span>0.2</span><span>0.4</span><span>0.5</span><span>0.6</span><span>0.7</span><span>0.8</span><span>0.9</span><span>1.0</span>
+                </div>
+                <div class="chart-legend">
+                    <div class="cl-item">
+                        <div class="cl-dot" style="background:var(--green);"></div>Low (&lt;0.40)
+                    </div>
+                    <div class="cl-item">
+                        <div class="cl-dot" style="background:var(--amber);"></div>Medium (0.40–0.69)
+                    </div>
+                    <div class="cl-item">
+                        <div class="cl-dot" style="background:var(--rose);"></div>High (≥0.70)
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-hdr">
+                    <div class="card-title">⚡ Recent Agent Activity</div>
+                    <span style="font-family:var(--mono);font-size:10px;color:var(--faint);cursor:pointer;">View all
+                        →</span>
+                </div>
+                <div id="feed"></div>
+            </div>
+        </div>
+
+        <!-- INCOMING RISK TRIGGERS -->
+        <div>
+            <div class="incoming-hdr">
+                <div class="in-pulse"></div>
+                <div class="in-title">Incoming Risk Triggers</div>
+                <div class="in-cnt" id="in-cnt">0 active</div>
+            </div>
+            <div class="calls-grid" id="calls-grid"></div>
+            <div class="no-calls" id="no-calls">
+                <div style="font-size:26px;margin-bottom:.5rem;opacity:.35;">🛡️</div>
+                <div style="font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;">Agent
+                    monitoring · No triggers yet</div>
+                <div style="font-size:12px;margin-top:.25rem;">New risk events will appear here automatically</div>
+            </div>
+        </div>
+
+        <div style="height:.5rem;"></div>
+    </div>
+
+    <!-- OVERLAY -->
+    <div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+
+    <!-- DRAWER -->
+    <div class="drawer" id="drawer">
+        <div class="dw-top">
+            <div class="dw-close" onclick="closeDrawer()">✕</div>
+            <div class="dw-info">
+                <div class="dw-name" id="dw-name">—</div>
+                <div class="dw-meta" id="dw-meta"></div>
+            </div>
+            <div class="dw-timer-block">
+                <div class="dw-tval" id="dw-timer">0:00</div>
+                <div class="dw-tlbl">Time Elapsed</div>
+            </div>
+        </div>
+        <div class="dw-tabs">
+            <div class="dw-tab on" onclick="switchTab('reasoning',this)">🧠 Reasoning + Tools</div>
+            <div class="dw-tab" onclick="switchTab('summary',this)">📋 Summary</div>
+            <div class="dw-tab" onclick="switchTab('actions',this)">⚡ Actions</div>
+        </div>
+        <div class="dw-body" id="dw-body"></div>
+    </div>
+
+    <div class="toast" id="toast">
+        <div class="toast-title" id="t-title"></div>
+        <div id="t-body"></div>
+    </div>
+
+    <script>
+        // ─── DATA ───────────────────────────────────────────────────────
+        const CLAIMS = [
+            { id: 'CLM-8821', name: 'Sarah Mitchell', type: 'Dental', amount: 1240, score: .87, band: 'HIGH', day: 14, missing_doc: 'GP Specialist Referral Letter', checks_1h: 3, checks_24h: 9, accel: true, in_app: true },
+            { id: 'CLM-6109', name: 'Maria Costa', type: 'Surgery', amount: 12400, score: .91, band: 'HIGH', day: 8, missing_doc: null, checks_1h: 4, checks_24h: 14, accel: true, in_app: false },
+            { id: 'CLM-5517', name: 'Aoife Kelly', type: 'Physio', amount: 320, score: .78, band: 'HIGH', day: 11, missing_doc: 'Physiotherapy Assessment Report', checks_1h: 2, checks_24h: 8, accel: true, in_app: true },
+            { id: 'CLM-7432', name: 'James O\'Brien', type: 'GP Visit', amount: 65, score: .71, band: 'HIGH', day: 22, missing_doc: null, checks_1h: 1, checks_24h: 6, accel: false, in_app: false },
+            { id: 'CLM-9253', name: 'Tom Walsh', type: 'GP Visit', amount: 55, score: .62, band: 'MED', day: 7, missing_doc: null, checks_1h: 0, checks_24h: 2, accel: false, in_app: false },
+            { id: 'CLM-3381', name: 'Ciarán Murphy', type: 'Dental', amount: 890, score: .69, band: 'MED', day: 18, missing_doc: null, checks_1h: 1, checks_24h: 4, accel: false, in_app: false },
+        ];
+
+        const FEED_DATA = [
+            { icon: '📧', bg: '#eff6ff', text: '<strong>Email sent</strong> to Sarah Mitchell — missing GP referral doc highlighted', time: '2m ago', badge: 'EMAIL', bc: '#eff6ff', btc: '#1d4ed8' },
+            { icon: '🔔', bg: '#fef3c7', text: '<strong>Slack alert</strong> dispatched for Maria Costa — surgery claim €12,400', time: '14m ago', badge: 'SLACK', bc: '#fef3c7', btc: '#b45309' },
+            { icon: '📱', bg: '#f0fdf4', text: '<strong>Push notification</strong> sent to Aoife Kelly — missing physio report', time: '38m ago', badge: 'PUSH', bc: '#f0fdf4', btc: '#15803d' },
+            { icon: '✅', bg: '#f0fdf4', text: '<strong>CLM-2281 resolved</strong> — intervention successful, escalation avoided', time: '1h ago', badge: 'DONE', bc: '#f0fdf4', btc: '#15803d' },
+            { icon: '📞', bg: '#f5f3ff', text: '<strong>Callback queued</strong> for Maria Costa — high-value surgical claim', time: '1h ago', badge: 'CALL', bc: '#f5f3ff', btc: '#6d28d9' },
+            { icon: '🧠', bg: '#e8f0fb', text: '<strong>Scoring run</strong> complete — 24 claims processed, 6 flagged HIGH', time: '2h ago', badge: 'MODEL', bc: '#e8f0fb', btc: '#003d7a' },
+        ];
+
+        // ─── CLOCK ──────────────────────────────────────────────────────
+        setInterval(() => { document.getElementById('clock').textContent = new Date().toLocaleTimeString('en-IE', { hour12: false }); }, 1000);
+        document.getElementById('clock').textContent = new Date().toLocaleTimeString('en-IE', { hour12: false });
+
+        // ─── CHART ──────────────────────────────────────────────────────
+        function renderChart() {
+            const bins = [{ c: 2, col: '#86efac' }, { c: 3, col: '#4ade80' }, { c: 2, col: '#fcd34d' }, { c: 3, col: '#fbbf24' }, { c: 4, col: '#f97316' }, { c: 5, col: '#f43f5e' }, { c: 3, col: '#e11d48' }, { c: 2, col: '#be123c' }];
+            const max = Math.max(...bins.map(b => b.c));
+            document.getElementById('bar-chart').innerHTML = bins.map(b => `<div class="bc-col"><div class="bc-cnt">${b.c}</div><div class="bc-bar" style="height:${(b.c / max) * 100}%;background:${b.col};" title="${b.c} claims"></div></div>`).join('');
+        }
+
+        // ─── FEED ───────────────────────────────────────────────────────
+        function renderFeed() {
+            document.getElementById('feed').innerHTML = FEED_DATA.map(f => `
+  <div class="feed-item">
+    <div class="fi-icon" style="background:${f.bg};">${f.icon}</div>
+    <div class="fi-body"><div class="fi-text">${f.text}</div><div class="fi-time">${f.time}</div></div>
+    <div class="fi-badge" style="background:${f.bc};color:${f.btc};border:1px solid ${f.bc};">${f.badge}</div>
+  </div>`).join('');
+        }
+
+        // ─── CARD STATE ─────────────────────────────────────────────────
+        const CS = {}; // claim id -> state object
+        let activeN = 0;
+
+        function bColor(band) { return band === 'HIGH' ? 'var(--rose)' : band === 'MED' ? 'var(--amber)' : 'var(--green)'; }
+        function stInfo(s) {
+            if (s === 'proc') return { dot: 'var(--laya)', label: 'Processing…', tc: 'var(--laya)' };
+            if (s === 'done') return { dot: 'var(--teal)', label: 'Resolved', tc: 'var(--teal)' };
+            if (s === 'await') return { dot: 'var(--violet)', label: 'Awaiting Employee', tc: 'var(--violet)' };
+            if (s === 'esc') return { dot: 'var(--rose)', label: 'Escalated', tc: 'var(--rose)' };
+            return { dot: '#94a3b8', label: 'Incoming', tc: 'var(--sub)' };
+        }
+
+        function cardHTML(c, st) {
+            const pct = Math.round(c.score * 100), col = bColor(c.band), si = stInfo(st);
+            const isProc = st === 'proc';
+            return `
+  <div class="cc-top">
+    <div><div class="cc-name">${c.name}</div><div class="cc-claim-id">${c.id} · ${c.type}</div></div>
+    <span class="band b-${c.band}">${c.band}</span>
+  </div>
+  <div class="cc-tags">
+    <span class="cc-tag">€${c.amount.toLocaleString()}</span>
+    <span class="cc-tag">Day ${c.day}</span>
+    <span class="cc-tag">${c.checks_24h} checks</span>
+    ${c.missing_doc ? `<span class="cc-warn">⚠ Missing doc</span>` : ''}
+    ${c.in_app ? `<span class="cc-tag" style="color:var(--teal);">📱 In App</span>` : ''}
+  </div>
+  <div class="cc-bar-row">
+    <div class="strack"><div class="sfill" style="width:${pct}%;background:${col};"></div></div>
+    <div class="spct" style="color:${col};">${pct}%</div>
+  </div>
+  <div class="cc-foot">
+    <div class="cc-status">
+      ${isProc ? `<div class="cc-spinner"></div>` : `<div class="sdot" style="background:${si.dot};"></div>`}
+      <span style="color:${si.tc};font-family:var(--mono);font-size:10px;">${si.label}</span>
+    </div>
+    <div class="cc-time">${st === 'done' ? '✓ Done' : st === 'await' ? '⏳ Awaiting' : 'just now'}</div>
+  </div>`;
+        }
+
+        function borderClass(c, st) {
+            if (st === 'proc') return 'cc-proc';
+            if (st === 'done') return 'cc-done-c';
+            if (st === 'await') return 'cc-await';
+            return c.band === 'HIGH' ? 'cc-high' : c.band === 'MED' ? 'cc-med' : 'cc-low';
+        }
+
+        function updateCard(id, st) {
+            const cs = CS[id]; if (!cs) return;
+            cs.state = st;
+            const el = document.getElementById('card-' + id); if (!el) return;
+            el.className = 'call-card ' + borderClass(cs.c, st);
+            el.innerHTML = cardHTML(cs.c, st);
+            el.onclick = () => openDrawer(id);
+        }
+
+        function spawnCard(c) {
+            CS[c.id] = { c, state: 'incoming', receivedAt: Date.now(), trace: [], timerStart: null, timerEnd: null, awaitEmp: false };
+            const el = document.createElement('div');
+            el.className = 'call-card cc-' + c.band.toLowerCase() + ' new';
+            el.id = 'card-' + c.id;
+            el.innerHTML = cardHTML(c, 'incoming');
+            el.onclick = () => openDrawer(c.id);
+            document.getElementById('no-calls').style.display = 'none';
+            document.getElementById('calls-grid').prepend(el);
+            activeN++; updateAgentUI(); updateBadge();
+            setTimeout(() => startProc(c.id), 1600);
+        }
+
+        function updateBadge() {
+            const n = Object.values(CS).filter(x => x.state !== 'done').length;
+            document.getElementById('in-cnt').textContent = n + ' active';
+        }
+
+        function updateAgentUI() {
+            const proc = Object.values(CS).filter(x => x.state === 'proc').length;
+            const orb = document.getElementById('agent-orb');
+            if (proc > 0) {
+                orb.textContent = '🤖'; orb.classList.add('active');
+                document.getElementById('agent-status').textContent = `Agent Active — ${proc} case${proc > 1 ? 's' : ''} running`;
+                document.getElementById('agent-sub').textContent = 'Reasoning and calling tools in real time…';
+            } else {
+                orb.textContent = '😴'; orb.classList.remove('active');
+                document.getElementById('agent-status').textContent = Object.keys(CS).length ? 'Agent Monitoring' : 'Agent Sleeping';
+                document.getElementById('agent-sub').textContent = 'Waiting for incoming risk triggers…';
+            }
+            document.getElementById('as-active').textContent = proc;
+        }
+
+        // ─── BUILD TRACE ─────────────────────────────────────────────────
+        function buildTrace(c) {
+            const hv = c.amount > 5000, md = !!c.missing_doc, ia = c.in_app, uid = 'U' + c.id.slice(-4);
+            const steps = [];
+
+            steps.push({ type: 'loop', lbl: 'Loop 1 — Retrieve & Assess' });
+            steps.push({ type: 'think', dur: '3.2s', text: `I've received a ${c.band} risk score of ${Math.round(c.score * 100)}% for ${c.name} on ${c.id}. This is a ${c.type.toLowerCase()} claim valued at €${c.amount.toLocaleString()}, currently on day ${c.day}.\n\nBefore making any decision I need complete information — both the claim details and how this customer has been behaving in the app. I'll retrieve both now and think from there.` });
+            steps.push({ type: 'tool', name: 'get_claim_details', args: `{\n  "claim_id": "${c.id}"\n}`, res: `{\n  "claim_type": "${c.type.toLowerCase()}",\n  "amount_eur": ${c.amount},\n  "status": "under_review",\n  "days_since_submission": ${c.day},\n  "missing_docs": ${md},\n  "missing_doc_name": ${md ? `"${c.missing_doc}"` : 'null'}\n}` });
+            steps.push({ type: 'tool', name: 'get_customer_behaviour', args: `{\n  "user_id": "${uid}",\n  "claim_id": "${c.id}"\n}`, res: `{\n  "checks_1h": ${c.checks_1h},\n  "checks_24h": ${c.checks_24h},\n  "is_accelerating": ${c.accel},\n  "mins_since_last_open": ${ia ? 8 : 250},\n  "currently_in_app": ${ia}\n}` });
+            steps.push({ type: 'tool', name: 'get_customer_history', args: `{\n  "user_id": "${uid}"\n}`, res: `{\n  "member_years": 4,\n  "past_claims": 7,\n  "segment": "${hv ? 'premium' : 'standard'}",\n  "past_escalations": ${c.band === 'HIGH' ? 1 : 0}\n}` });
+
+            steps.push({ type: 'loop', lbl: 'Loop 2 — Decide & Act' });
+            let r2 = '';
+            if (hv) r2 = `This is a high-value ${c.type.toLowerCase()} claim at €${c.amount.toLocaleString()} on day ${c.day}. Per policy, claims over €5,000 require direct human contact — I cannot resolve this with digital messaging alone.\n\nThe customer has checked ${c.checks_24h} times today${c.accel ? ', with the pattern accelerating' : ''}, signalling rising anxiety. All documents are in order, so the concern is likely about the wait and the claim value.\n\nMy plan: (1) alert the senior claims team immediately with a full brief, (2) schedule a HIGH priority callback, (3) send a holding email so the customer knows personal attention is coming.`;
+            else if (md) r2 = `The situation is clear: this claim is stalled because "${c.missing_doc}" has not been received. The customer has checked ${c.checks_24h} times today${c.accel ? ', accelerating in the last hour' : ''} — they're anxious because the app just shows "under review" with no explanation.\n\nThey are ${ia ? 'currently active in the app (8 mins ago)' : 'not currently in the app'}. I'll use ${ia ? 'an in-app push notification for immediate reach' : 'email as the channel'}.\n\nMy plan: (1) alert the claims team so a handler is primed to fast-track once the doc arrives, (2) send the customer a warm, specific message explaining exactly what's needed and how to submit it.`;
+            else r2 = `All documents are complete. The claim is in review and the customer has checked ${c.checks_24h} times. They're anxious about the wait but there's no blocking issue.\n\nI can provide real value here by giving them a genuine status update with an estimated resolution date — the app currently shows nothing beyond "under review".\n\nMy plan: (1) brief the claims team, (2) send a personalised update with a concrete ETA.`;
+            steps.push({ type: 'think', dur: '4.1s', text: r2 });
+
+            const urg = c.band === 'HIGH' ? 'URGENT' : 'ELEVATED';
+            const empMsg = hv
+                ? `🚨 URGENT — ${c.id} (${c.type}, €${c.amount.toLocaleString()}, Day ${c.day})\n\n${c.name} has checked ${c.checks_24h} times today${c.accel ? ', accelerating' : ''}. Premium segment. All docs complete. I've queued a callback — please ensure a senior handler takes this call.`
+                : md
+                    ? `${urg === 'URGENT' ? '🚨' : '⚠️'} ${urg} — ${c.id} (${c.type}, Day ${c.day})\n\n${c.name} checked ${c.checks_24h} times today${c.accel ? ', accelerating' : ''}. Blocker: missing "${c.missing_doc}". Sent ${ia ? 'push notification' : 'email'} with upload link. Confirm this is the only doc needed and fast-track once received.\n\nSLA: 60 min.`
+                    : `⚠️ ELEVATED — ${c.id} (${c.type}, Day ${c.day})\n\n${c.name}: ${c.checks_24h} checks, all docs complete, in final review. Sent status update with ETA. Verify 2–3 day timeline is realistic.`;
+
+            steps.push({ type: 'tool', name: 'alert_employee', args: `{\n  "claim_id": "${c.id}",\n  "urgency": "${urg}",\n  "sla_minutes": ${urg === 'URGENT' ? 60 : 120},\n  "message": "${empMsg.replace(/\n/g, '\\n')}"\n}`, res: `{\n  "sent": true,\n  "slack_message_ts": "1700000000.123",\n  "channel": "#claims-alerts"\n}` });
+
+            const fn = c.name.split(' ')[0];
+            const custSubj = md ? `Your ${c.type.toLowerCase()} claim — one document needed` : hv ? `Your ${c.type.toLowerCase()} claim — a Laya specialist will call you` : `Update on your ${c.type.toLowerCase()} claim`;
+            const custBody = md
+                ? `Hi ${fn},\n\nWe've reviewed your claim and there's just one thing holding it up:\n\n📎 ${c.missing_doc}\n\nUpload it at app.laya.ie/claims/${c.id}/upload and we'll resolve within 2 business days. Thank you for your patience 💙`
+                : hv
+                    ? `Hi ${fn},\n\nA Laya healthcare specialist will call you shortly with a personal update on your claim. No action needed from you. 💙`
+                    : `Hi ${fn},\n\nYour claim is in final review — all documents are in order and we expect to resolve within 2–3 business days. We'll notify you as soon as it's done. 💙`;
+
+            steps.push({ type: 'tool', name: 'send_customer_message', args: `{\n  "user_id": "${uid}",\n  "claim_id": "${c.id}",\n  "channel": "${ia ? 'in_app' : 'email'}",\n  "subject": "${custSubj}",\n  "body": "${custBody.replace(/\n/g, '\\n')}"\n}`, res: `{\n  "sent": true,\n  "channel": "${ia ? 'in_app' : 'email'}"\n}` });
+
+            if (hv) {
+                steps.push({ type: 'tool', name: 'schedule_callback', args: `{\n  "user_id": "${uid}",\n  "claim_id": "${c.id}",\n  "priority": "HIGH",\n  "notes": "High-value ${c.type.toLowerCase()} €${c.amount.toLocaleString()}, day ${c.day}. Customer needs personal reassurance. All docs complete."\n}`, res: `{\n  "scheduled": true,\n  "slot": "Next available (within 2h)",\n  "queue": "senior_claims"\n}` });
+            }
+
+            steps.push({ type: 'loop', lbl: 'Loop 3 — Log & Close' });
+            steps.push({ type: 'think', dur: '0.8s', text: `All necessary actions have been taken. I've informed the Laya claims team and communicated directly with the customer through the appropriate channel. Now I'll log this intervention so outcomes can be monitored over the next 48 hours and fed back into the model.` });
+
+            const actList = hv
+                ? ['Sent URGENT employee alert to Slack', 'Sent holding email to customer', 'Scheduled HIGH priority callback']
+                : md
+                    ? [`Sent ${urg} employee alert to Slack`, `Sent ${ia ? 'in-app push notification' : 'email'} — upload link for ${c.missing_doc}`]
+                    : ['Sent ELEVATED employee alert to Slack', `Sent ${ia ? 'in-app notification' : 'email'} — status update with ETA`];
+
+            steps.push({ type: 'tool', name: 'log_intervention', args: `{\n  "claim_id": "${c.id}",\n  "actions_taken": ${JSON.stringify(actList)},\n  "reasoning": "${(r2.slice(0, 100) + '...').replace(/"/g, '\\"')}",\n  "expected_outcome": "Support call avoided within 48h"\n}`, res: `{\n  "logged": true,\n  "intervention_id": "INT-${Date.now()}",\n  "monitor_until": "${new Date(Date.now() + 48 * 36e5).toISOString().slice(0, 16)}"\n}` });
+
+            steps.push({ type: 'done', actions: actList, decision: hv ? `Routed to senior human handler — high-value claim` : md ? `Identified document blocker and prompted customer to upload "${c.missing_doc}"` : `Provided proactive status update with 2–3 day ETA` });
+
+            return { steps, empMsg, custSubj, custBody, actList, ia, hv, md };
+        }
+
+        // ─── PROCESS ────────────────────────────────────────────────────
+        async function startProc(id) {
+            const cs = CS[id]; if (!cs) return;
+            cs.state = 'proc'; cs.timerStart = Date.now();
+            cs.traceData = buildTrace(cs.c); cs.trace = cs.traceData.steps;
+            updateCard(id, 'proc'); updateAgentUI();
+            const delay = 3500 + Math.random() * 2500;
+            await new Promise(r => setTimeout(r, delay));
+            cs.timerEnd = Date.now(); cs.state = 'done';
+            updateCard(id, 'done'); updateAgentUI(); updateBadge();
+            activeN = Math.max(0, activeN - 1);
+            showToast('Agent Complete', `${cs.c.name} — intervention dispatched`);
+            if (currentID === id) renderDW(id);
+        }
+
+        // ─── DRAWER ────────────────────────────────────────────────────
+        let currentID = null, dwTimer = null, currentTab = 'reasoning';
+
+        function openDrawer(id) {
+            currentID = id; currentTab = 'reasoning';
+            document.querySelectorAll('.dw-tab').forEach((t, i) => t.classList.toggle('on', i === 0));
+            renderDW(id);
+            document.getElementById('overlay').classList.add('open');
+            document.getElementById('drawer').classList.add('open');
+            startDWTimer(id);
+        }
+
+        function closeDrawer() {
+            document.getElementById('overlay').classList.remove('open');
+            document.getElementById('drawer').classList.remove('open');
+            clearInterval(dwTimer); currentID = null;
+        }
+
+        function switchTab(tab, el) {
+            currentTab = tab;
+            document.querySelectorAll('.dw-tab').forEach(t => t.classList.remove('on'));
+            el.classList.add('on');
+            if (currentID) renderDW(currentID);
+        }
+
+        function startDWTimer(id) {
+            clearInterval(dwTimer);
+            dwTimer = setInterval(() => {
+                const cs = CS[id]; if (!cs) return;
+                const s = Math.round(((cs.timerEnd || Date.now()) - (cs.timerStart || cs.receivedAt)) / 1000);
+                const el = document.getElementById('dw-timer'); if (el) el.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+                if (cs.timerEnd) clearInterval(dwTimer);
+            }, 400);
+        }
+
+        function renderDW(id) {
+            const cs = CS[id]; if (!cs) return;
+            const c = cs.c, col = bColor(c.band);
+            document.getElementById('dw-name').textContent = c.name;
+            document.getElementById('dw-meta').innerHTML = `
+    <span class="dw-chip" style="color:${col};border-color:${col};">${c.band} · ${Math.round(c.score * 100)}%</span>
+    <span class="dw-chip" style="color:var(--sub);border-color:var(--border);">${c.id}</span>
+    <span class="dw-chip" style="color:var(--sub);border-color:var(--border);">${c.type} · €${c.amount.toLocaleString()}</span>
+    <span class="dw-chip" style="color:var(--sub);border-color:var(--border);">Day ${c.day}</span>
+    ${cs.state === 'done' ? '<span class="dw-chip" style="color:var(--green);border-color:var(--green);">✓ Resolved</span>' : cs.state === 'proc' ? '<span class="dw-chip" style="color:var(--laya);border-color:var(--laya);">⚙ Processing</span>' : ''}`;
+
+            const body = document.getElementById('dw-body');
+
+            if (currentTab === 'reasoning') {
+                if (cs.state === 'proc' && (!cs.trace || !cs.trace.length)) {
+                    body.innerHTML = `<div class="proc-ph"><div class="proc-spinner"></div><div style="font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--faint);">Agent initialising…</div></div>`;
+                    return;
+                }
+                const wrap = document.createElement('div');
+                wrap.className = 'trace-wrap';
+                (cs.trace || []).forEach(step => {
+                    const el = buildTraceEl(step);
+                    if (el) wrap.appendChild(el);
+                });
+                if (cs.state === 'proc') {
+                    const td = document.createElement('div');
+                    td.style.cssText = 'display:flex;gap:5px;align-items:center;padding:.8rem 0;';
+                    td.innerHTML = Array(3).fill(`<div style="width:7px;height:7px;border-radius:50%;background:var(--faint);opacity:.4;animation:tdot 1.1s ease-in-out infinite;"></div>`).join('').replace(/infinite;"/g, (_, i) => `infinite ${i > 0 ? i * .2 : 0}s;"`);
+                    td.innerHTML = `<style>@keyframes tdot{0%,60%,100%{transform:translateY(0);opacity:.4;}30%{transform:translateY(-5px);opacity:1;}}</style><div style="width:7px;height:7px;border-radius:50%;background:var(--faint);opacity:.4;animation:tdot 1.1s ease-in-out infinite;"></div><div style="width:7px;height:7px;border-radius:50%;background:var(--faint);opacity:.4;animation:tdot 1.1s ease-in-out infinite .2s;"></div><div style="width:7px;height:7px;border-radius:50%;background:var(--faint);opacity:.4;animation:tdot 1.1s ease-in-out infinite .4s;"></div>`;
+                    wrap.appendChild(td);
+                }
+                body.innerHTML = ''; body.appendChild(wrap);
+                // expand first think block
+                const firstThink = body.querySelector('.think-body');
+                if (firstThink) { firstThink.classList.add('show'); const tog = firstThink.previousElementSibling?.querySelector('.think-tog'); if (tog) tog.classList.add('open'); }
+            }
+            else if (currentTab === 'summary') {
+                if (cs.state !== 'done') { body.innerHTML = `<div class="proc-ph"><div class="proc-spinner"></div><div style="font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--faint);">Waiting for agent to complete…</div></div>`; return; }
+                body.innerHTML = buildSummaryHTML(cs);
+            }
+            else if (currentTab === 'actions') {
+                if (cs.state !== 'done') { body.innerHTML = `<div class="proc-ph"><div class="proc-spinner"></div><div style="font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--faint);">Waiting for agent to complete…</div></div>`; return; }
+                body.innerHTML = buildActionsHTML(cs);
+            }
+        }
+
+        // ─── TRACE ELEMENTS ─────────────────────────────────────────────
+        function buildTraceEl(step) {
+            const el = document.createElement('div');
+
+            if (step.type === 'loop') {
+                el.className = 'loop-marker';
+                el.innerHTML = `<div class="loop-line"></div><div class="loop-badge">${step.lbl}</div><div class="loop-line"></div>`;
+                return el;
+            }
+
+            if (step.type === 'think') {
+                el.className = 'think-block';
+                const uid = 'tb-' + Math.random().toString(36).slice(2);
+                el.innerHTML = `
+      <div class="think-hdr" onclick="toggleThink('${uid}')">
+        <span class="think-icon">💭</span>
+        <span class="think-lbl">Thinking · ${step.dur}</span>
+        <span class="think-dur">extended reasoning</span>
+        <span class="think-tog" id="tog-${uid}">▼</span>
+      </div>
+      <div class="think-body" id="${uid}">
+        ${step.text.split('\n').filter(l => l.trim()).map(l => `<p>${l}</p>`).join('')}
+      </div>`;
+                return el;
+            }
+
+            if (step.type === 'tool') {
+                el.className = 'tool-block';
+                el.innerHTML = `
+      <div class="tool-hdr">
+        <div class="tool-fn">🔧 <span>${esc(step.name)}</span>()</div>
+        <span class="tool-chip-done">✓ done</span>
+      </div>
+      <div class="tool-args">${esc(step.args)}</div>
+      <div class="tool-result"><div class="tr-lbl">Result</div>${esc(step.res)}</div>`;
+                return el;
+            }
+
+            if (step.type === 'done') {
+                el.className = 'done-block';
+                el.innerHTML = `
+      <div style="font-size:22px;">✅</div>
+      <div>
+        <div class="done-label">Agent Complete</div>
+        <div class="done-title">${step.decision || 'Task completed'}</div>
+        <div class="done-sub">${(step.actions || []).join(' · ')}</div>
+      </div>`;
+                return el;
+            }
+            return null;
+        }
+
+        function toggleThink(id) {
+            const b = document.getElementById(id); if (!b) return;
+            const show = b.classList.toggle('show');
+            const t = document.getElementById('tog-' + id); if (t) t.classList.toggle('open', show);
+        }
+
+        function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+        // ─── SUMMARY HTML ───────────────────────────────────────────────
+        function buildSummaryHTML(cs) {
+            const done = cs.trace.find(s => s.type === 'done') || {};
+            const tools = cs.trace.filter(s => s.type === 'tool').length;
+            const thinks = cs.trace.filter(s => s.type === 'think').length;
+            const elapsed = cs.timerEnd ? Math.round((cs.timerEnd - cs.timerStart) / 1000) : 0;
+            const col = bColor(cs.c.band);
+            return `
+    <div class="sum-card">
+      <div class="sum-lbl">Agent Decision</div>
+      <div class="sum-text">${done.decision || 'Task completed'}</div>
+    </div>
+    <div class="slbl" style="margin-bottom:.5rem;">Outcome</div>
+    <div class="out-chips">
+      <div class="oc" style="background:var(--green-lite);border-color:#86efac;color:var(--green);">✅ Support call avoided</div>
+      <div class="oc" style="background:var(--laya-lite);border-color:#bfdbfe;color:var(--laya);">🎯 ${Math.round(cs.c.score * 100)}% risk score</div>
+      <div class="oc" style="background:var(--surface2);border-color:var(--border);color:var(--sub);">⏱ ${elapsed}s total</div>
+      <div class="oc" style="background:var(--teal-lite);border-color:#99f6e4;color:var(--teal);">👁 48h monitoring</div>
+    </div>
+    <div class="slbl" style="margin-bottom:.5rem;">Stats</div>
+    <div class="stat-3">
+      ${[['Reasoning', thinks], ['Tool Calls', tools], ['Actions', (done.actions || []).length]].map(([l, v]) => `
+        <div class="s3-item"><div class="s3-val">${v}</div><div class="s3-lbl">${l}</div></div>`).join('')}
+    </div>
+    <div class="slbl" style="margin-bottom:.5rem;">Action Timeline</div>
+    ${(done.actions || []).map((a, i) => `
+      <div class="tl-item">
+        <div class="tl-dot" style="background:var(--laya);border-color:var(--laya);"></div>
+        <div class="tl-body"><div class="tl-lbl">Step ${i + 1}</div><div class="tl-txt">${a}</div></div>
+      </div>`).join('')}
+    <div class="tl-item">
+      <div class="tl-dot" style="background:var(--green);border-color:var(--green);"></div>
+      <div class="tl-body"><div class="tl-lbl">Monitoring</div><div class="tl-txt">Outcome tracked 48h · Labels will retrain model</div></div>
+    </div>
+    ${cs.awaitEmp ? `<div class="await-block" style="margin-top:1rem;"><div class="await-icon">💬</div><div><div class="await-title">Awaiting Employee Response</div><div class="await-text">Agent has alerted the claims team and is waiting for a reply before the next step.</div></div></div>` : ''}`;
+        }
+
+        // ─── ACTIONS HTML ───────────────────────────────────────────────
+        function buildActionsHTML(cs) {
+            const td = cs.traceData || {};
+            const c = cs.c;
+            return `
+    <div class="slbl" style="margin-bottom:.8rem;">Dispatched Actions</div>
+
+    <div class="ac-card">
+      <div class="ac-hdr">
+        <div class="ac-title-txt">🔔 Employee Alert — Slack</div>
+        <span class="ac-status" style="background:${c.band === 'HIGH' ? 'var(--rose-lite)' : 'var(--amber-lite)'};color:${c.band === 'HIGH' ? 'var(--rose)' : 'var(--amber)'};">${c.band === 'HIGH' ? 'URGENT' : 'ELEVATED'}</span>
+      </div>
+      <div class="ac-body-p">
+        <div class="slack-preview">
+          <div style="margin-bottom:.4rem;"><span class="slack-bot">LayaAIAgent</span><span class="slack-ts">just now</span></div>
+          ${c.band === 'HIGH' ? '🚨' : '⚠️'} <strong>${c.band === 'HIGH' ? 'URGENT' : 'ELEVATED'}</strong> — ${c.id}<br>
+          ${c.name} · ${c.type} · €${c.amount.toLocaleString()} · Day ${c.day}<br>
+          ${c.checks_24h} checks today${c.accel ? ', accelerating' : ''}${c.missing_doc ? `<br>⚠ Missing: "${c.missing_doc}"` : ''}
+          <div class="slack-btns">
+            <div class="sb-btn sb-g">✓ Update</div>
+            <div class="sb-btn sb-r">📞 Callback</div>
+            <div class="sb-btn sb-gr">Dismiss</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ac-card">
+      <div class="ac-hdr">
+        <div class="ac-title-txt">${c.in_app ? '📱 In-App Push Notification' : '📧 Email — SendGrid'}</div>
+        <span class="ac-status" style="background:var(--green-lite);color:var(--green);">SENT</span>
+      </div>
+      <div class="ac-body-p">
+        <div class="email-preview">
+          <div class="ep-subj">${td.custSubj || 'Update on your claim'}</div>
+          <div class="ep-body">${(td.custBody || '').replace(/\n/g, '<br>')}</div>
+        </div>
+      </div>
+    </div>
+
+    ${td.hv ? `
+    <div class="ac-card">
+      <div class="ac-hdr">
+        <div class="ac-title-txt">📞 Callback Scheduled</div>
+        <span class="ac-status" style="background:var(--violet-lite);color:var(--violet);">HIGH PRIORITY</span>
+      </div>
+      <div class="ac-body-p">
+        <div class="log-mono">customer: "${c.name}"<br>slot: "Next available (within 2 hours)"<br>queue: "senior_claims_handlers"</div>
+      </div>
+    </div>`: ''}
+
+    <div class="ac-card">
+      <div class="ac-hdr">
+        <div class="ac-title-txt">📊 Intervention Logged</div>
+        <span class="ac-status" style="background:var(--surface2);color:var(--sub);">48H MONITOR</span>
+      </div>
+      <div class="ac-body-p">
+        <div class="log-mono">claim_id: "${c.id}"<br>monitor_until: "${new Date(Date.now() + 48 * 36e5).toISOString().slice(0, 16)}"<br>expected_outcome: "Support call avoided"</div>
+      </div>
+    </div>
+
+    ${cs.awaitEmp ? `
+    <div class="await-block">
+      <div class="await-icon">💬</div>
+      <div style="flex:1;">
+        <div class="await-title">Awaiting Employee Response</div>
+        <div class="await-text">The agent is holding until the claims team responds to proceed with the next step.</div>
+        <textarea class="await-ta" rows="2" placeholder="Type employee response here to continue…"></textarea>
+        <button class="await-send" onclick="sendEmpReply('${c.id}')">Send to Agent →</button>
+      </div>
+    </div>`: ''}`;
+        }
+
+        function sendEmpReply(id) {
+            const cs = CS[id]; if (!cs) return;
+            cs.awaitEmp = false;
+            showToast('Response Received', 'Agent processing employee update…');
+            setTimeout(() => { if (currentID === id) renderDW(id); }, 500);
+        }
+
+        // ─── SIMULATION ENGINE ──────────────────────────────────────────
+        const DELAYS = [3000, 7500, 13000, 21000, 32000, 47000];
+        DELAYS.forEach((d, i) => { setTimeout(() => { if (i < CLAIMS.length) spawnCard(CLAIMS[i]); }, d); });
+
+        // ─── TOAST ─────────────────────────────────────────────────────
+        let toastT;
+        function showToast(title, body) {
+            document.getElementById('t-title').textContent = title;
+            document.getElementById('t-body').textContent = body;
+            const t = document.getElementById('toast'); t.classList.add('show');
+            clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 4000);
+        }
+
+        // ─── INIT ───────────────────────────────────────────────────────
+        renderChart(); renderFeed();
+    </script>
+</body>
+
+</html>
