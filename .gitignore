@@ -1,3 +1,5 @@
 AI_Agent/__pycache__/
 .DS_Store
 AI_Agent/.env
+
+.env
