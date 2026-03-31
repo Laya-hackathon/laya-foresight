@@ -53,6 +53,51 @@ async def ingest_prediction(request: Request):
     return {"status": "ok", "scenario_id": f"pred_{member_id}", "risk_band": risk_band}
 
 
+@app.get("/api/simulate")
+async def simulate(request: Request):
+    """Run ML pipeline scripts then return scenarios via SSE."""
+    import sys
+    import asyncio
+
+    scripts_dir = Path(__file__).parent.parent / "ML_pipeline" / "scripts"
+    scripts = ["nightly_pipeline.py", "data_fetch.py", "predict_multiple.py"]
+
+    async def event_stream():
+        for script in scripts:
+            script_path = scripts_dir / script
+            yield f"data: {json.dumps({'type': 'step', 'data': {'script': script, 'status': 'running'}})}\n\n"
+            try:
+                proc = await asyncio.create_subprocess_exec(
+                    sys.executable, str(script_path),
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.STDOUT,
+                    cwd=str(scripts_dir),
+                )
+                async for line in proc.stdout:
+                    text = line.decode().rstrip()
+                    if text:
+                        yield f"data: {json.dumps({'type': 'log', 'data': {'script': script, 'line': text}})}\n\n"
+                await proc.wait()
+                if proc.returncode != 0:
+                    yield f"data: {json.dumps({'type': 'step', 'data': {'script': script, 'status': 'error'}})}\n\n"
+                    yield f"data: {json.dumps({'type': 'error', 'data': {'message': f'{script} exited with code {proc.returncode}'}})}\n\n"
+                    return
+                yield f"data: {json.dumps({'type': 'step', 'data': {'script': script, 'status': 'done'}})}\n\n"
+            except Exception as e:
+                yield f"data: {json.dumps({'type': 'error', 'data': {'message': str(e)}})}\n\n"
+                return
+
+        from database import db_get_scenarios
+        scenarios = db_get_scenarios()
+        yield f"data: {json.dumps({'type': 'done', 'data': {'scenarios': scenarios}})}\n\n"
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache, no-store", "Connection": "keep-alive", "X-Accel-Buffering": "no"},
+    )
+
+
 @app.get("/api/scenarios")
 async def list_scenarios():
     from database import db_get_scenarios
@@ -230,6 +275,32 @@ async def resume_scenario(scenario_id: str, question_id: int, request: Request):
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache, no-store", "Connection": "keep-alive", "X-Accel-Buffering": "no"}
     )
+
+
+@app.post("/api/admin/reset")
+async def admin_reset():
+    """Truncate all aa_ tables and model_predictions."""
+    from database import get_connection
+    tables = [
+        "aa_agent_errors",
+        "aa_agent_reasoning_steps",
+        "aa_agent_tool_calls",
+        "aa_customer_emails",
+        "aa_customer_notifications",
+        "aa_employee_alerts",
+        "aa_employee_questions",
+        "aa_scheduled_callbacks",
+        "aa_interventions",
+        "aa_agent_paused_state",
+        "aa_agent_runs",
+        "aa_ml_predictions",
+        "model_predictions",
+    ]
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            for t in tables:
+                cur.execute(f"DELETE FROM {t}")
+    return {"status": "ok", "cleared": tables}
 
 
 @app.get("/api/health")

@@ -29,9 +29,13 @@ print("Connected to database")
 # ==============================
 # 3. LOAD MODEL + FEATURES
 # ==============================
-model = joblib.load(r"D:\NCI and visa\Academics\semester 2\laya\code\model & setting\xgb_v1.pkl")
+BASE_DIR   = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # ML_pipeline/
+MODEL_DIR  = os.path.join(BASE_DIR, "model & setting")
+DATA_DIR   = os.path.join(BASE_DIR, "test_data")
 
-with open(r"D:\NCI and visa\Academics\semester 2\laya\code\model & setting\feature_columns (1).json") as f:
+model = joblib.load(os.path.join(MODEL_DIR, "xgb_v1.pkl"))
+
+with open(os.path.join(MODEL_DIR, "feature_columns (1).json")) as f:
     feature_columns = json.load(f)
 
 print("Model loaded")
@@ -41,8 +45,8 @@ print("Model loaded")
 # ==============================
 from data_preprocessing_embedding import preprocess_and_encode
 
-input_path = r"D:\NCI and visa\Academics\semester 2\laya\Complete repo\laya-foresight\ML_pipeline\test_data\test_feature_snapshots.csv"
-output_path = r"D:\NCI and visa\Academics\semester 2\laya\Complete repo\laya-foresight\ML_pipeline\test_data\test_data_processsed\encoded_test_users_data.csv"
+input_path  = os.path.join(DATA_DIR, "test_feature_snapshots.csv")
+output_path = os.path.join(DATA_DIR, "test_data_processsed", "encoded_test_users_data.csv")
 
 preprocess_and_encode(input_path=input_path, output_path=output_path)
 

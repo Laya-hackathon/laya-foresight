@@ -3,6 +3,22 @@
 -- ============================================================
 
 
+-- Source predictions from the ML model (read-only input table)
+CREATE TABLE IF NOT EXISTS model_predictions (
+    prediction_id       SERIAL PRIMARY KEY,
+    snapshot_id         VARCHAR,
+    claim_id            VARCHAR,
+    user_id             VARCHAR NOT NULL,
+    predicted_at        TIMESTAMPTZ DEFAULT NOW(),
+    escalation_score    FLOAT NOT NULL,
+    risk_level          VARCHAR NOT NULL,        -- HIGH | MEDIUM | LOW
+    model_version       VARCHAR,
+    top_feature_1       VARCHAR,
+    top_feature_2       VARCHAR,
+    top_feature_3       VARCHAR
+);
+
+
 -- ML prediction ingested from the model
 CREATE TABLE aa_ml_predictions (
     prediction_id       SERIAL PRIMARY KEY,

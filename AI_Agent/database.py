@@ -11,6 +11,17 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ---------------------------------------------------------------------------
+# Table names — set APP_MODE=TEST in .env to query test_ prefixed tables.
+# ---------------------------------------------------------------------------
+
+_TEST = os.getenv("APP_MODE", "").upper() == "TEST"
+
+_CLAIMS     = "test_claims"   if _TEST else "claims"
+_USERS      = "test_users"    if _TEST else "users"
+_APP_LOGS   = "test_app_logs" if _TEST else "app_logs"
+_MODEL_PRED = "model_predictions"
+
+# ---------------------------------------------------------------------------
 # Connection pool — reuses TCP connections instead of opening a new one
 # on every query (was the primary cause of 14-26s response times).
 # ---------------------------------------------------------------------------
@@ -53,7 +64,7 @@ def get_connection():
 def db_get_claim_details(claim_id: str) -> dict:
     with get_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT * FROM claims WHERE claim_id = %s", (claim_id,))
+            cur.execute(f"SELECT * FROM {_CLAIMS} WHERE claim_id = %s", (claim_id,))
             row = cur.fetchone()
     if row:
         return dict(row)
@@ -61,10 +72,9 @@ def db_get_claim_details(claim_id: str) -> dict:
 
 
 def db_get_user_details(user_id: str) -> dict:
-    # TODO: switch back to 'users' once first_name, last_name, email columns are added to the real table
     with get_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT * FROM users_backup WHERE user_id = %s", (user_id,))
+            cur.execute(f"SELECT * FROM {_USERS} WHERE user_id = %s", (user_id,))
             row = cur.fetchone()
     if row:
         return dict(row)
@@ -74,8 +84,8 @@ def db_get_user_details(user_id: str) -> dict:
 def db_get_app_logs(user_id: str, claim_id: str) -> list:
     with get_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute("""
-                SELECT * FROM app_logs
+            cur.execute(f"""
+                SELECT * FROM {_APP_LOGS}
                 WHERE user_id = %s AND claim_id = %s
                   AND timestamp::timestamptz >= NOW() - INTERVAL '48 hours'
                 ORDER BY timestamp ASC
@@ -269,11 +279,11 @@ def db_get_stats() -> dict:
                     END AS success_rate
                 FROM (
                     SELECT
-                        COUNT(*) FILTER (WHERE risk_band = 'HIGH')   AS high_risk,
-                        COUNT(*) FILTER (WHERE risk_band = 'MEDIUM') AS medium_risk,
-                        COUNT(*) FILTER (WHERE risk_band = 'LOW')    AS low_risk,
-                        COUNT(*)                                      AS total_predictions
-                    FROM aa_ml_predictions
+                        COUNT(*) FILTER (WHERE escalation_score >= 0.7)                            AS high_risk,
+                        COUNT(*) FILTER (WHERE escalation_score >= 0.4 AND escalation_score < 0.7) AS medium_risk,
+                        COUNT(*) FILTER (WHERE escalation_score < 0.4)                             AS low_risk,
+                        COUNT(*)                                                                    AS total_predictions
+                    FROM model_predictions
                 ) p
                 CROSS JOIN (SELECT COUNT(*) AS calls_prevented FROM aa_interventions         ) i
                 CROSS JOIN (SELECT COUNT(*) AS emails_sent     FROM aa_customer_emails       ) e
@@ -306,7 +316,7 @@ def db_get_feed(limit: int = 20) -> list:
                 UNION ALL
                 SELECT 'intervention', claim_id, reasoning, created_at FROM aa_interventions
                 UNION ALL
-                SELECT 'prediction', member_id, CONCAT('Risk: ', risk_band, ' (', ROUND(risk_probability::numeric, 2), ')'), created_at FROM aa_ml_predictions
+                SELECT 'prediction', user_id, CONCAT('Risk: ', CASE WHEN escalation_score >= 0.7 THEN 'HIGH' WHEN escalation_score >= 0.4 THEN 'MEDIUM' ELSE 'LOW' END, ' (', ROUND(escalation_score::numeric, 2), ')'), predicted_at FROM model_predictions
                 ORDER BY created_at DESC
                 LIMIT %s
             """, (limit,))
@@ -321,15 +331,15 @@ def db_get_chart_data() -> list:
         with conn.cursor() as cur:
             cur.execute("""
                 SELECT
-                    COUNT(*) FILTER (WHERE risk_probability >= 0.0 AND risk_probability < 0.2) AS bin0,
-                    COUNT(*) FILTER (WHERE risk_probability >= 0.2 AND risk_probability < 0.4) AS bin1,
-                    COUNT(*) FILTER (WHERE risk_probability >= 0.4 AND risk_probability < 0.5) AS bin2,
-                    COUNT(*) FILTER (WHERE risk_probability >= 0.5 AND risk_probability < 0.6) AS bin3,
-                    COUNT(*) FILTER (WHERE risk_probability >= 0.6 AND risk_probability < 0.7) AS bin4,
-                    COUNT(*) FILTER (WHERE risk_probability >= 0.7 AND risk_probability < 0.8) AS bin5,
-                    COUNT(*) FILTER (WHERE risk_probability >= 0.8 AND risk_probability < 0.9) AS bin6,
-                    COUNT(*) FILTER (WHERE risk_probability >= 0.9)                            AS bin7
-                FROM aa_ml_predictions
+                    COUNT(*) FILTER (WHERE escalation_score >= 0.0 AND escalation_score < 0.2) AS bin0,
+                    COUNT(*) FILTER (WHERE escalation_score >= 0.2 AND escalation_score < 0.4) AS bin1,
+                    COUNT(*) FILTER (WHERE escalation_score >= 0.4 AND escalation_score < 0.5) AS bin2,
+                    COUNT(*) FILTER (WHERE escalation_score >= 0.5 AND escalation_score < 0.6) AS bin3,
+                    COUNT(*) FILTER (WHERE escalation_score >= 0.6 AND escalation_score < 0.7) AS bin4,
+                    COUNT(*) FILTER (WHERE escalation_score >= 0.7 AND escalation_score < 0.8) AS bin5,
+                    COUNT(*) FILTER (WHERE escalation_score >= 0.8 AND escalation_score < 0.9) AS bin6,
+                    COUNT(*) FILTER (WHERE escalation_score >= 0.9)                            AS bin7
+                FROM model_predictions
             """)
             row = cur.fetchone()
     return [{"c": row[f"bin{i}"], "col": col} for i, col in enumerate(colors)]
@@ -342,26 +352,29 @@ def db_get_chart_data() -> list:
 def db_get_all_claims() -> list:
     with get_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute("""
+            cur.execute(f"""
                 SELECT
                     c.claim_id, c.user_id, c.treatment_type, c.claim_amount,
                     c.submission_timestamp, c.submission_channel,
                     c.missing_documents_flag, c.adjudicator_flag,
                     c.claim_rejected_flag, c.resubmission_flag, c.original_claim_id,
-                    u.first_name, u.last_name, u.email,
+                    u.full_name, u.email,
                     u.age_group, u.region, u.plan_type,
                     u.membership_tenure_years, u.past_escalation_count,
                     u.behavior_archetype,
                     p.risk_band, p.risk_probability,
                     p.created_at AS predicted_at
-                FROM claims c
-                LEFT JOIN users_backup u ON u.user_id = c.user_id
+                FROM {_CLAIMS} c
+                LEFT JOIN {_USERS} u ON u.user_id = c.user_id
                 LEFT JOIN (
-                    SELECT DISTINCT ON (member_id)
-                        member_id, risk_band, risk_probability, created_at
-                    FROM aa_ml_predictions
-                    ORDER BY member_id, prediction_id DESC
-                ) p ON p.member_id = c.user_id
+                    SELECT DISTINCT ON (user_id)
+                        user_id,
+                        CASE WHEN escalation_score >= 0.7 THEN 'HIGH' WHEN escalation_score >= 0.4 THEN 'MEDIUM' ELSE 'LOW' END AS risk_band,
+                        escalation_score AS risk_probability,
+                        predicted_at AS created_at
+                    FROM model_predictions
+                    ORDER BY user_id, prediction_id DESC
+                ) p ON p.user_id = c.user_id
                 ORDER BY
                     CASE
                         WHEN p.risk_band = 'HIGH'   THEN 1
@@ -386,25 +399,26 @@ def db_get_scenarios() -> list:
     # with 20 it was 61 — each TCP handshake ~500ms = 10-30s total latency.
     with get_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute("""
+            cur.execute(f"""
                 SELECT
-                    p.member_id, p.claim_id, p.risk_probability, p.risk_band,
+                    p.user_id, p.claim_id, p.escalation_score,
+                    CASE WHEN p.escalation_score >= 0.7 THEN 'HIGH' WHEN p.escalation_score >= 0.4 THEN 'MEDIUM' ELSE 'LOW' END AS risk_band,
                     c.treatment_type, c.claim_amount, c.submission_timestamp,
                     c.submission_channel, c.missing_documents_flag,
                     c.adjudicator_flag, c.claim_rejected_flag,
                     c.resubmission_flag, c.original_claim_id,
-                    u.first_name, u.last_name, u.email,
+                    u.full_name, u.email,
                     u.age_group, u.region, u.plan_type,
                     u.membership_tenure_years, u.past_escalation_count,
                     u.behavior_archetype
                 FROM (
-                    SELECT DISTINCT ON (member_id)
-                        member_id, claim_id, risk_probability, risk_band
-                    FROM aa_ml_predictions
-                    ORDER BY member_id, prediction_id DESC
+                    SELECT DISTINCT ON (user_id)
+                        user_id, claim_id, escalation_score
+                    FROM model_predictions
+                    ORDER BY user_id, prediction_id DESC
                 ) p
-                LEFT JOIN claims       c ON c.claim_id = p.claim_id
-                LEFT JOIN users_backup u ON u.user_id  = p.member_id
+                LEFT JOIN {_CLAIMS} c ON c.claim_id = p.claim_id
+                LEFT JOIN {_USERS}  u ON u.user_id  = p.user_id
             """)
             rows = cur.fetchall()
 
@@ -412,11 +426,11 @@ def db_get_scenarios() -> list:
     for row in rows:
         row = dict(row)
         scenarios.append({
-            "id":         f"pred_{row['member_id']}",
+            "id":         f"pred_{row['user_id']}",
             "risk_band":  row["risk_band"],
-            "risk_score": row["risk_probability"],
+            "risk_score": row["escalation_score"],
             "claim_id":   row["claim_id"],
-            "user_id":    row["member_id"],
+            "user_id":    row["user_id"],
             "claim": {
                 "treatment_type":         row.get("treatment_type"),
                 "claim_amount":           row.get("claim_amount"),
@@ -429,8 +443,7 @@ def db_get_scenarios() -> list:
                 "original_claim_id":      row.get("original_claim_id"),
             } if row.get("treatment_type") else {},
             "user": {
-                "first_name":              row.get("first_name"),
-                "last_name":               row.get("last_name"),
+                "full_name":              row.get("full_name"),
                 "email":                   row.get("email"),
                 "age_group":               row.get("age_group"),
                 "region":                  row.get("region"),
@@ -438,7 +451,7 @@ def db_get_scenarios() -> list:
                 "membership_tenure_years": row.get("membership_tenure_years"),
                 "past_escalation_count":   row.get("past_escalation_count"),
                 "behavior_archetype":      row.get("behavior_archetype"),
-            } if row.get("first_name") else {},
+            } if row.get("full_name") else {},
             "app_logs": [],
         })
     return scenarios
@@ -513,13 +526,13 @@ def db_get_run_history(scenario_id: str) -> list:
 def db_get_reports() -> list:
     with get_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute("""
+            cur.execute(f"""
                 SELECT
                     ar.run_id, ar.scenario_id, ar.member_id, ar.claim_id,
                     ar.risk_score, ar.risk_band, ar.status,
                     ar.started_at, ar.ended_at,
                     EXTRACT(EPOCH FROM (ar.ended_at - ar.started_at))::int AS duration_sec,
-                    u.first_name, u.last_name, u.plan_type, u.region,
+                    u.full_name, u.plan_type, u.region,
                     c.treatment_type, c.claim_amount,
                     i.actions_taken, i.reasoning AS agent_reasoning, i.actions_count,
                     (SELECT COUNT(*) FROM aa_customer_emails      e WHERE e.run_id = ar.run_id) AS emails_sent,
@@ -527,10 +540,10 @@ def db_get_reports() -> list:
                     (SELECT COUNT(*) FROM aa_scheduled_callbacks   cb WHERE cb.run_id = ar.run_id) AS callbacks,
                     (SELECT COUNT(*) FROM aa_employee_alerts       ea WHERE ea.run_id = ar.run_id) AS alerts
                 FROM aa_agent_runs ar
-                LEFT JOIN users_backup u ON u.user_id = ar.member_id
-                LEFT JOIN claims       c ON c.claim_id = ar.claim_id
+                LEFT JOIN {_USERS}  u ON u.user_id  = ar.member_id
+                LEFT JOIN {_CLAIMS} c ON c.claim_id = ar.claim_id
                 LEFT JOIN aa_interventions i ON i.run_id = ar.run_id
-                WHERE ar.status IN ('complete', 'max_steps')
+                WHERE ar.status IN ('complete', 'max_steps', 'error')
                 ORDER BY ar.started_at DESC
             """)
             rows = cur.fetchall()
@@ -649,15 +662,15 @@ def db_get_question(question_id: int) -> dict:
 def db_get_pending_questions() -> list:
     with get_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute("""
+            cur.execute(f"""
                 SELECT q.*,
-                       u.first_name, u.last_name,
+                       u.full_name,
                        c.treatment_type, c.claim_amount,
                        ar.risk_band
                 FROM aa_employee_questions q
                 LEFT JOIN aa_agent_runs ar ON ar.run_id = q.run_id
-                LEFT JOIN users_backup u ON u.user_id = ar.member_id
-                LEFT JOIN claims c ON c.claim_id = q.claim_id
+                LEFT JOIN {_USERS}  u ON u.user_id  = ar.member_id
+                LEFT JOIN {_CLAIMS} c ON c.claim_id = q.claim_id
                 WHERE q.status = 'pending'
                 ORDER BY q.created_at DESC
             """)
@@ -697,20 +710,49 @@ def db_get_paused_state(run_id: int) -> dict:
 def db_get_all_alerts() -> list:
     with get_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute("""
+            cur.execute(f"""
                 SELECT
                     ea.run_id, ea.claim_id, ea.message, ea.urgency, ea.sla_minutes, ea.created_at,
-                    u.first_name, u.last_name,
+                    u.full_name,
                     c.treatment_type, c.claim_amount,
                     ar.risk_band, ar.risk_score
                 FROM aa_employee_alerts ea
                 LEFT JOIN aa_agent_runs ar ON ar.run_id = ea.run_id
-                LEFT JOIN users_backup u ON u.user_id = ar.member_id
-                LEFT JOIN claims c ON c.claim_id = ea.claim_id
+                LEFT JOIN {_USERS}  u ON u.user_id  = ar.member_id
+                LEFT JOIN {_CLAIMS} c ON c.claim_id = ea.claim_id
                 ORDER BY ea.created_at DESC
             """)
             rows = cur.fetchall()
     return [dict(r) for r in rows]
+
+
+# ---------------------------------------------------------------------------
+# Simulate — ingest from model_prediction into aa_ml_predictions
+# ---------------------------------------------------------------------------
+
+def db_simulate_from_model_predictions() -> int:
+    """Read rows from model_prediction and insert new ones into aa_ml_predictions.
+    Skips any (member_id, claim_id) pairs already present to avoid duplicates.
+    Returns the number of newly inserted rows."""
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(f"""
+                INSERT INTO aa_ml_predictions (member_id, claim_id, predicted_risk, risk_probability, risk_band)
+                SELECT
+                    mp.user_id,
+                    mp.claim_id,
+                    CASE WHEN mp.escalation_score >= 0.7 THEN 2 WHEN mp.escalation_score >= 0.4 THEN 1 ELSE 0 END,
+                    mp.escalation_score,
+                    CASE WHEN mp.escalation_score >= 0.7 THEN 'HIGH' WHEN mp.escalation_score >= 0.4 THEN 'MEDIUM' ELSE 'LOW' END
+                FROM {_MODEL_PRED} mp
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM aa_ml_predictions p
+                    WHERE p.member_id = mp.user_id AND p.claim_id = mp.claim_id
+                )
+            """)
+            inserted = cur.rowcount
+        conn.commit()
+    return inserted
 
 
 if __name__ == "__main__":
